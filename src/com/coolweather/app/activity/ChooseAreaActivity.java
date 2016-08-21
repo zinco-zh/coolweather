@@ -14,7 +14,10 @@ import com.coolweather.app.util.Utility;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -66,6 +69,14 @@ public class ChooseAreaActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean("city_selected", false)) {
+			Intent intent = new Intent(this, WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
 		listView = (ListView) findViewById(R.id.list_view);
@@ -76,8 +87,8 @@ public class ChooseAreaActivity extends Activity {
 		coolWeatherDB = CoolWeatherDB.getInstance(this);
 		listView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View view,
-					int index, long arg3) {
+			public void onItemClick(AdapterView<?> arg0, View view, int index,
+					long arg3) {
 				// TODO Auto-generated method stub
 				if (currentLevel == LEVEL_PROVINCE) {
 					selectedProvince = provinceList.get(index);
@@ -85,9 +96,15 @@ public class ChooseAreaActivity extends Activity {
 				} else if (currentLevel == LEVEL_CITY) {
 					selectedCity = cityList.get(index);
 					queryCounties();
+				} else if (currentLevel == LEVEL_COUNTY) {
+					String countyCode = countyList.get(index).getCountyCode();
+					Intent intent = new Intent(ChooseAreaActivity.this,
+							WeatherActivity.class);
+					intent.putExtra("county_code", countyCode);
+					startActivity(intent);
+					finish();
 				}
 			}
-
 		});
 		queryProvinces();// 加载省级数据
 	}
@@ -105,7 +122,7 @@ public class ChooseAreaActivity extends Activity {
 			adapter.notifyDataSetChanged();
 			listView.setSelection(0);
 			titleText.setText("中国");
-			currentLevel=LEVEL_PROVINCE;
+			currentLevel = LEVEL_PROVINCE;
 		} else {
 			queryFromServer(null, "province");
 		}
@@ -124,7 +141,7 @@ public class ChooseAreaActivity extends Activity {
 			adapter.notifyDataSetChanged();
 			listView.setSelection(0);
 			titleText.setText(selectedProvince.getProvinceName());
-			currentLevel=LEVEL_CITY;
+			currentLevel = LEVEL_CITY;
 		} else {
 			queryFromServer(selectedProvince.getProvinceCode(), "city");
 		}
@@ -143,7 +160,7 @@ public class ChooseAreaActivity extends Activity {
 			adapter.notifyDataSetChanged();
 			listView.setSelection(0);
 			titleText.setText(selectedCity.getCityName());
-			currentLevel=LEVEL_COUNTY;
+			currentLevel = LEVEL_COUNTY;
 		} else {
 			queryFromServer(selectedCity.getCityCode(), "county");
 		}
@@ -220,25 +237,27 @@ public class ChooseAreaActivity extends Activity {
 		}
 		progressDialog.show();
 	}
+
 	/**
 	 * 关闭进度对话框
 	 */
-	private void closeProgressDialog(){
-		if(progressDialog!=null){
+	private void closeProgressDialog() {
+		if (progressDialog != null) {
 			progressDialog.dismiss();
 		}
 	}
+
 	/**
 	 * 捕获Back按键
 	 */
 	@Override
 	public void onBackPressed() {
 		// TODO Auto-generated method stub
-		if(currentLevel==LEVEL_COUNTY){
+		if (currentLevel == LEVEL_COUNTY) {
 			queryCities();
-		}else if(currentLevel==LEVEL_CITY){
+		} else if (currentLevel == LEVEL_CITY) {
 			queryProvinces();
-		}else{
+		} else {
 			finish();
 		}
 	}
